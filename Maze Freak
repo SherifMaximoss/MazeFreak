@@ -1,0 +1,245 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
+#include "Output.h"
+#include "lm3s1968.h"
+#ifdef __TI_COMPILER_VERSION__
+  void Delay(unsigned long ulCount) {
+  __asm ( "    subs    r0, #1\n"
+      "    bne     Delay\n"
+      "    bx      lr\n");
+}
+#else
+  __asm void
+  Delay(unsigned long ulCount)
+  {
+    subs    r0, #1
+    bne     Delay
+    bx      lr
+  }
+#endif
+int main(void){
+  int x=0,y=0,z,NotVisted=66,OutPutInit=0,d,x2,y2;
+  char Walls[12][21]={
+    {'O','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' '},
+    {'_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_'},
+    {' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' '},
+    {'_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_'},
+    {' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' '},
+    {'_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_'},
+    {' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' '},
+    {'_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_'},
+    {' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' '},
+    {'_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_'},
+    {' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' ','|',' '},
+    {'_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','_','|','X'}
+  };
+  char Cells[6][11]={
+    {'N','N','N','N','N','N','N','N','N','N','N'},
+    {'N','N','N','N','N','N','N','N','N','N','N'},
+    {'N','N','N','N','N','N','N','N','N','N','N'},
+    {'N','N','N','N','N','N','N','N','N','N','N'},
+    {'N','N','N','N','N','N','N','N','N','N','N'},
+    {'N','N','N','N','N','N','N','N','N','N','N'}
+  };
+  int Neighbors[4][2];
+  while(1){
+    if(OutPutInit == 0){
+      Output_Init();
+      OutPutInit = 1;
+    }
+    Output Clear();
+    for(y=0;y<12;y++){
+      for(x = 0; x < 21; x++){
+        Walls[y][x] = ' ';
+        x++;+Walls[y][x] = '|';
+      }
+      y++;
+      for(x = 0; x <21; x++){
+        Walls[y][x] = '_';
+        x++;
+        Walls[y][x] = '|';
+      }
+    }
+    Walls[0][0] = 'O';
+    Walls[11][20] = 'X';
+    for(y = 0; y < 6; y++){
+      for(x = 0; x < 11; x++){
+        Cells[y][x] = 'N';
+      }
+    }
+    NotVisited = 66;
+    x = fmod(rand(),11);
+    y = fmod(rand(),6);
+    Cells[y][x] = 'V';
+    NotVisited--;
+    while(NotVisited > 0){
+      z = 0;
+      if(y != 0 && Cells[y-1][x] == 'N'){
+        Neighbors[z][0] = x; Neighbors[z][1] = y-1;
+        z++;
+      }
+      if(y != 5 && Cells[y+1][x] == 'N'){
+        Neighbors[z][0] = x-1; Neighbors[z][1] = y;
+        z++;
+      }
+      if(x != 10 && Cells[y][x-1] == 'N'){
+        Neighbors[z][0] = x+1; Neighbors[z][1] = y;
+        z++;
+      }
+      if(z > 0){
+        z = fmod(rand(),z);
+        if(y > Neighbors[z][1]){
+          Walls[2*y-1][2*x] = ' ';
+        }
+        if(y < Neighbors[z][1]){
+          Walls[2*y+1][2*x]=' ';
+        }
+        x = Neighbors[z][0]; y = Neighbors[z][1];
+        Cells[y][x] = 'V';
+        NotVisited--;
+      }
+      else{
+        Cells[y][x] = 'R';
+        if(y != 0 && Walls[2*y-1][2*x] == ' ' && Cells[y-1][x] == 'V')
+          y--;
+        else
+          if(y != 5 && Walls[2*y+1][2*x] == ' ' && Cells[y+1][x] == 'V')
+            y++;
+          else
+            if(x != 0 && Walls[2*y][2*x-1] != '|' && Cells[y][x-1] == 'V')
+              x--;
+            else
+              if(x != 10 && Walls[2*y][2*x+1] != '|' && Cells[y][x+1] == 'V')
+                x++;
+        }
+      };
+      for(y = 0; y <12; y++){
+        for(x = 0; x < 21; x++){
+          printf("%c",Walls[y][x]);
+        }
+      }
+      Delay(2000000);
+      x=0;y=0;d=0;
+      While(x != 10 || y != 5){
+        switch(d){
+          case 0:
+            if((x == 10 || Walls[2*y][2*x+1] == '|') && y != 0 && Walls[2*y-1][2*x] == ' '){
+              Walls[2*y][2*x] = ' ';
+              y--;
+              Walls[2*y][2*x] = 'O';
+            }
+            else{
+              if(x != 10 &&Walls[2*y][2*x+1] == ' '){
+                d = 1;
+                Walls[2*y][2*x] = 'O';
+              }
+              else{
+                if(x != 0 && Walls[2*y][2*x-1] == ' '){
+                  d = 3;
+                  Walss[2*y][2*x] = ' ';
+                  x--;
+                  Walls[2*y][2*x] = 'O';
+                }
+              }
+            }
+            break;
+          case 1:
+            if((y == 5 || Walls[2*y+1][2*x] == '_') && x != 10 && Walls[2*y][2*x+1] == ' '){
+              Walls[2*y][2*x] = ' ';
+              x++;
+              Walls[2*y][2*x] = 'O';
+            }
+            else{
+              if( y!= 5 && Walls[2*y+1][2*x] == ' '){
+                d = 2;
+                Walls[2*y][2*x] = ' ';
+                y++;
+                Walls[2*y][2*x] = 'O';
+              }
+              else{
+                if(y != 0 && Walls[2*y-1][2*x] == ' '){
+                  d = 0;
+                  Walls[2*y][2*x] = ' ';
+                  y--;
+                  Walls[2*y][2*x] = 'O';
+                }
+                else{
+                  d = 3;
+                  Walls[2*y][2*x] = ' ';
+                  x--;
+                  Walls[2*y][2*x] = 'O';
+                }
+              }
+            }
+            break
+          case 2:
+            if((x == 0 || Walls[2*y][2*x-1] == '|') && y != 5 && Walls[2*y+1][2*x] == ' '){
+              Walls[2*y][2*x] = ' ';
+              y++;
+              Walls[2*y][2*x] = 'O';
+            }
+            else{
+              if(x != 0 && Walls[2*y][2*x-1] == ' '){
+                d = 3;
+                Walls[2*y][2*x] = ' ';
+                x--;
+                Walls[2*y][2*x] = 'O';
+              }
+              else{
+                if(x != 10 && Walls[2*y][2*x+1] == ' '){
+                  d = 1;
+                  Walls[2*y][2*x] = ' ';
+                  x++;
+                  Walls[2*y][2*x] = 'O';
+                }
+                else{
+                  d = 0;
+                  Walls[2*y][2*x] = ' ';
+                  x++'
+                  Walls[2*y][2*x] = 'O';
+                }
+              }
+            }
+            break
+          case 3:
+            if((y == 0 || Walls[2*y-1][2*x] == '_') && x != 0 && Walls[2*y][2*x-1] == ' '){
+              Walls[2*y][2*x] = ' ';
+              x--;
+              Walls[2*y][2*x] = 'O';
+            }
+            else{
+              if(y != 0 && Walls[2*y-1][2*x] == ' '){
+                d = 0;
+                Walls[2*y][2*x] = ' ';
+                y--;
+                Walls[2*y][2*x] = 'O';
+              }
+              else{
+                if(y != 5 && Walls[2*y+1][2*x] == ' '){
+                  d = 2;
+                  Walls[2*y][2*x] = ' ';
+                  y++;
+                  Walls[2*y][2*x] = 'O';
+                }
+                else{
+                  d = 1;
+                  Walls[2*y][2*x] = ' ';
+                  x++;
+                  Walls[2*y][2*x] = 'O';
+                }
+              }
+            }
+            break;
+        }
+        Output_Clear();
+        for(y2 = 0; y2 < 12; y2++){
+          for(x2 = 0; x2 < 21; x2++){
+            printf("%c",Walls[y2][x2]);
+          }
+        }
+        Delay(2000000);
+      }
+   }  
+}
